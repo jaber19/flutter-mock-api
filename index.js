@@ -20,51 +20,45 @@ app.get('/', (req, res) => {
 });
 
 // Main endpoint - only responds with success if image is provided
+// Main endpoint - handles both multipart and non-multipart requests
 app.post('/api/image', upload.single('image'), (req, res) => {
-  // Check if file was uploaded
-  if (!req.file) {
-    return res.status(400).json({ 
-      success: false, 
-      error: 'No image file provided',
-      message: 'Please upload an image file'
-    });
-  }
-  
-  // Check if it's actually an image by checking mimetype
-  const validImageTypes = [
-    'image/jpeg',
-    'image/jpg', 
-    'image/png',
-    'image/gif',
-    'image/webp',
-    'image/bmp',
-    'image/svg+xml'
-  ];
-  
-  if (!validImageTypes.includes(req.file.mimetype)) {
-    return res.status(400).json({
-      success: false,
-      error: 'Invalid file type',
-      message: `File type ${req.file.mimetype} is not supported. Please upload an image.`,
-      receivedType: req.file.mimetype
-    });
-  }
-  
-  // Success response - only returned when valid image is uploaded
-  res.json({
-    success: true,
-    message: 'Image received successfully!',
-    data: {
-      filename: req.file.originalname,
-      size: req.file.size,
-      type: req.file.mimetype,
-      timestamp: new Date().toISOString()
+  // Check if this is a multipart request with a file
+  if (req.file) {
+    // Handle multipart request with file upload
+    // Check if it's actually an image by checking mimetype
+    const validImageTypes = [
+      'image/jpeg',
+      'image/jpg', 
+      'image/png',
+      'image/gif',
+      'image/webp',
+      'image/bmp',
+      'image/svg+xml'
+    ];
+    
+    if (!validImageTypes.includes(req.file.mimetype)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid file type',
+        message: `File type ${req.file.mimetype} is not supported. Please upload an image.`,
+        receivedType: req.file.mimetype
+      });
     }
-  });
-});
-
-// Handle non-multipart requests to the image endpoint
-app.post('/api/image', (req, res) => {
+    
+    // Success response for valid image upload
+    return res.json({
+      success: true,
+      message: 'Image received successfully!',
+      data: {
+        filename: req.file.originalname,
+        size: req.file.size,
+        type: req.file.mimetype,
+        timestamp: new Date().toISOString()
+      }
+    });
+  }
+  
+  // Handle non-multipart requests
   res.status(400).json({
     success: false,
     error: 'Invalid request format',
